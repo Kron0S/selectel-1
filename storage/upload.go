@@ -127,3 +127,6 @@ func (c *Client) upload(reader io.Reader, container, filename, contentType strin
 func (c *Client) Upload(reader io.Reader, container, filename, contentType string) error {
 	return c.upload(reader, container, filename, contentType, true)
 }
+func (c *Client) UploadBody(reader io.Reader, container, filename, contentType string) error {
+	return c.upload(reader, container, filename, contentType, false)
+}

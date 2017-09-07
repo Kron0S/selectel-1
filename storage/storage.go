@@ -125,12 +125,14 @@ type API interface {
 	DoClient
 	Info() StorageInformation
 	Upload(reader io.Reader, container, filename, t string) error
+	UploadBody(reader io.Reader, container, filename, t string) error
 	UploadFile(filename, container string) error
 	Auth(user, key string) error
 	Debug(debug bool)
 	Token() string
 	C(string) ContainerAPI
 	Container(string) ContainerAPI
+	СopyFile(srcContainer, srcPath, dstContainer, dstPath string) error
 	RemoveObject(container, filename string) error
 	URL(container, filename string) string
 	CreateContainer(name string, private bool) (ContainerAPI, error)
@@ -245,6 +247,30 @@ func (c *Client) RemoveObject(container, filename string) error {
 		return ErrorObjectNotFound
 	}
 	if res.StatusCode == http.StatusNoContent {
+		return nil
+	}
+	return ErrorBadResponce
+}
+
+// DeleteObject removes object from specified container
+func (c *Client) СopyFile(srcContainer, srcPath, dstContainer, dstPath string) error {
+	fullSrcPath := srcContainer + "/" + strings.Trim(srcPath, "/");
+	fullDstPath := dstContainer + "/" + strings.Trim(dstPath, "/");
+
+	request, err := c.NewRequest(putMethod, nil, fullDstPath)
+	if err != nil {
+		return err
+	}
+	request.Header.Add("X-Copy-From", fullSrcPath)
+	request.Header.Add("Content-Length", "0")
+	res, err := c.Do(request)
+	if err != nil {
+		return err
+	}
+	if res.StatusCode == http.StatusNotFound {
+		return ErrorObjectNotFound
+	}
+	if res.StatusCode == http.StatusCreated {
 		return nil
 	}
 	return ErrorBadResponce
